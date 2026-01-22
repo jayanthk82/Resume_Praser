@@ -1,46 +1,19 @@
+import os
 import asyncio
 from contextlib import asynccontextmanager
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from typing import List, Dict, Any, Optional
 
-from fastapi import FastAPI, HTTPException  #type: ignore
-from pydantic import BaseModel   #type: ignore
+from fastapi import FastAPI, HTTPException #type: ignore
+from pydantic import BaseModel #type: ignore
 
-# Import your existing logic functions
-# Assuming these are in local files as per your import statements
-from mindee import Client  #type: ignore
-from mindee_logic import parse_resume_with_mindee
-from firecrawl_engine import FirecrawlSession
-from hyperlink import extract_hyperlinks
-
-# --- Configuration ---
-MINDEE_API_KEY = "YOUR_MINDEE_KEY"
-FIRECRAWL_API_KEY = "fc-YOUR_FIRECRAWL_KEY"
-
-# --- Global State for Clients ---
-# We store clients here so they are created only once
-resources = {}
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Executes on startup and shutdown. 
-    Initializes connections once to be reused.
-    """
-    print("🚀 Starting up: Initializing API Clients...")
-    resources["firecrawl"] = FirecrawlSession(FIRECRAWL_API_KEY)
-    resources["mindee"] = Client(api_key=MINDEE_API_KEY)
-    
-    yield  # The application runs here
-    
-    print("🛑 Shutting down: Cleaning up resources...")
-    resources.clear()
-
-app = FastAPI(lifespan=lifespan)
-
-# --- Request Model ---
-class ResumeRequest(BaseModel):
-    file_path: str  # Path to the PDF on the server
+# Service Imports
+from mindee import Client #type: ignore
+from mindee import ClientV2 #type: ignore
+from mindee_service import parse_resume_with_mindee
+from firecrawl_service import FirecrawlService
+from pdf_service import extract_hyperlinks
+from config import Config
 
 # --- Helper Wrapper for Blocking Code ---
 async def run_blocking_task(func, *args):
@@ -49,8 +22,42 @@ async def run_blocking_task(func, *args):
     with ThreadPoolExecutor() as pool:
         return await loop.run_in_executor(pool, func, *args)
 
-# --- The Asynchronous Endpoint ---
-@app.post("/process-resume")
+# --- Lifespan Manager ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Executes on startup and shutdown. 
+    Initializes connections once and stores them in app.state.
+    """
+    print("🚀 Starting up: Initializing API Clients...")
+    
+    # Initialize clients and store in app.state
+    app.state.firecrawl = FirecrawlService(Config.FIRECRAWL_API_KEY)
+    app.state.mindee = mindee = ClientV2(api_key='md_rSSY4sX-Tullrv-aHUPeQTRx_YvW0PWzlTQ37lwqRqY')
+    
+    yield  # The application runs here
+    
+    print("🛑 Shutting down: Cleaning up resources...")
+    # Clear references (optional in Python, but good practice)
+    del app.state.firecrawl
+    del app.state.mindee
+
+app = FastAPI(lifespan=lifespan)
+
+# --- Request Model ---
+class ResumeRequest(BaseModel):
+    file_path: str
+
+# --- Response Models (Optional but recommended for documentation) ---
+class ResumeResponse(BaseModel):
+    status: str
+    resume_analysis: Optional[Dict[str, Any]]
+    external_links_found: int
+    scraped_links_content: List[Dict[str, Any]]
+
+# --- Endpoints ---
+
+@app.post("/process-resume", response_model=ResumeResponse)
 async def process_resume(request: ResumeRequest):
     """
     Orchestrates the entire flow:
@@ -60,26 +67,21 @@ async def process_resume(request: ResumeRequest):
     """
     
     # 1. Validation
-    import os
     if not os.path.exists(request.file_path):
-        raise HTTPException(status_code=404, detail="File not found on server")
+        raise HTTPException(status_code=404, detail=f"File not found: {request.file_path}")
 
     print(f"Processing: {request.file_path}")
 
-    # 2. Parallel Execution (Optional Optimization)
-    # We can run link extraction and Mindee parsing at the same time
-    # since they don't depend on each other.
-    
-    # Task A: Extract Hyperlinks (CPU bound / Blocking IO)
-    # We wrap it because PyMuPDF is synchronous
+    # 2. Parallel Execution
+    # Task A: Extract Hyperlinks (CPU bound)
     links_task = run_blocking_task(extract_hyperlinks, request.file_path)
     
-    # Task B: Parse Resume with Mindee (Network bound / Blocking)
-    # We wrap it because the standard Mindee client is synchronous
+    # Task B: Parse Resume with Mindee (Network bound)
+    # Access the global client via app.state.mindee
     mindee_task = run_blocking_task(
         parse_resume_with_mindee, 
         request.file_path, 
-        resources["mindee"]  # Pass the global client
+        app.state.mindee 
     )
 
     # Wait for both A and B to finish
@@ -89,13 +91,12 @@ async def process_resume(request: ResumeRequest):
     scraped_content = []
     
     if hyperlinks_data:
-        # Extract just the URL strings from the list of dicts
+        # Extract just the URL strings
         url_list = [item['url'] for item in hyperlinks_data]
         
-        # FirecrawlSession.scrape_links is likely blocking too (unless you wrote it async),
-        # so we wrap it as well to be safe.
+        # Access the global client via app.state.firecrawl
         scraped_content = await run_blocking_task(
-            resources["firecrawl"].scrape_links, 
+            app.state.firecrawl.scrape_links, 
             url_list
         )
 
@@ -107,12 +108,10 @@ async def process_resume(request: ResumeRequest):
         "scraped_links_content": scraped_content
     }
 
-# --- Standard Root Endpoint ---
 @app.get("/")
 def read_root():
-    return {"message": "Resume Processing API is Online 🟢"}
+    return {"message": "Resume Parser API is Online 🟢"}
 
-# --- Dev Server Entry Point ---
 if __name__ == "__main__":
-    import uvicorn   #type: ignore
+    import uvicorn #type: ignore
     uvicorn.run(app, host="0.0.0.0", port=8000)

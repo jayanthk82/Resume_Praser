@@ -1,21 +1,20 @@
-import os
 from typing import List, Dict, Any
-from firecrawl import FirecrawlApp #type: ignore
+from firecrawl import Firecrawl  #type: ignore
 
-class FirecrawlSession:
+class FirecrawlService:
     def __init__(self, api_key: str):
         """
         Initializes the Firecrawl connection once.
         """
         print("Initializing Firecrawl session...")
-        self.app = FirecrawlApp(api_key=api_key)
+        self.app = Firecrawl(api_key=api_key)
 
     def scrape_links(self, url_list: List[str]) -> List[Dict[str, Any]]:
         """
         Reuses the existing app instance to scrape a list of URLs.
         """
         if not url_list:
-            print("No URLs provided.")
+            print("No URLs provided for scraping.")
             return []
 
         print(f"Scraping {len(url_list)} URLs...")
@@ -27,8 +26,8 @@ class FirecrawlSession:
                 "onlyMainContent": True
             })
 
-            if batch_result['success']:
-                return batch_result['data']
+            if batch_result.get('success'):
+                return batch_result.get('data', [])
             else:
                 print(f"Batch scrape failed: {batch_result}")
                 return []
@@ -36,3 +35,12 @@ class FirecrawlSession:
         except Exception as e:
             print(f"Error during scraping: {e}")
             return []
+
+
+'''
+# manual testing 
+firecrawl = FirecrawlService("")
+docs = firecrawl.scrape_links(["https://www.linkedin.com/in/jayanthkonanki/"], limit=10)
+print(docs)
+
+'''
