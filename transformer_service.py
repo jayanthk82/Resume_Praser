@@ -1,4 +1,4 @@
-from sentence_transformers import SentenceTransformer, util  #type: ignore
+from sentence_transformers import util  #type: ignore
 
 def calculate_match_score(user_summary: str, jd_summary: str,model) -> float:
     
