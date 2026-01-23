@@ -95,12 +95,3 @@ def parse_resume_with_mindee(file_path: str, mindee_client: ClientV2) -> Optiona
         return None
     
 
-'''
-#manual testing  
-# --- Example Usage ---
-# if __name__ == "__main__":
-file_path = r"C:\Users\jkona\OneDrive\Desktop\ResumePraser\JAYANTHKONANKISDE.pdf"
-mindee = ClientV2(api_key='md_rSSY4sX-Tullrv-aHUPeQTRx_YvW0PWzlTQ37lwqRqY')
-data = parse_resume_with_mindee(file_path, mindee)
-print(data)
-'''

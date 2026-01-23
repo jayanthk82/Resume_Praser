@@ -35,11 +35,3 @@ def extract_hyperlinks(pdf_path: str) -> List[Dict[str, Any]]:
     return found_links
 
 
-'''
-#manual testing 
-
-links = extract_hyperlinks(r'C:\Users\jkona\OneDrive\Desktop\ResumePraser\JAYANTHKONANKISDE.pdf')
-for link in links:
-    print(link['url'])
-
-'''

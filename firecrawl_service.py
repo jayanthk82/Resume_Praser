@@ -36,11 +36,3 @@ class FirecrawlService:
             print(f"Error during scraping: {e}")
             return []
 
-
-'''
-# manual testing 
-firecrawl = FirecrawlService("")
-docs = firecrawl.scrape_links(["https://www.linkedin.com/in/jayanthkonanki/"], limit=10)
-print(docs)
-
-'''
