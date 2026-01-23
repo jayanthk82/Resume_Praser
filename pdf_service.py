@@ -23,10 +23,7 @@ def extract_hyperlinks(pdf_path: str) -> List[Dict[str, Any]]:
                         
                         # FILTER: strict check for http or https
                         if url.lower().startswith(("http://", "https://")):
-                            found_links.append({
-                                "page": page_num + 1,  # Human-readable page number
-                                "url": url
-                            })
+                            found_links.append(url)
                             
     except Exception as e:
         print(f"Error extracting hyperlinks from PDF: {e}")

@@ -1,6 +1,10 @@
 from typing import List, Dict, Any
 from firecrawl import Firecrawl  #type: ignore
 
+
+from typing import List, Dict, Any
+
+
 class FirecrawlService:
     def __init__(self, api_key: str):
         """
@@ -18,21 +22,16 @@ class FirecrawlService:
             return []
 
         print(f"Scraping {len(url_list)} URLs...")
-
-        try:
-            # Uses the persistent self.app instance
-            batch_result = self.app.batch_scrape_urls(url_list, {
-                "formats": ["markdown"],
-                "onlyMainContent": True
-            })
-
-            if batch_result.get('success'):
-                return batch_result.get('data', [])
-            else:
-                print(f"Batch scrape failed: {batch_result}")
-                return []
-
-        except Exception as e:
-            print(f"Error during scraping: {e}")
+        scrape_result = list()
+        for url in url_list:
+            try:
+                job = self.app.crawl(url, limit=5, poll_interval=1, timeout=120)
+                #result = filter_firecrawl_data(job)
+                scrape_result.append(job)
+            except Exception as e:
+                continue 
+        if scrape_result:
+            return scrape_result
+        else:
+            print(f"Batch scrape failed: {scrape_result}")
             return []
-
