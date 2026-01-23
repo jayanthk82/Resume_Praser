@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException #type: ignore
+from main import FastAPI, HTTPException #type: ignore
 from pydantic import BaseModel  #type: ignore
 from typing import List, Dict, Any, Optional
 from mindee import ClientV2  #type: ignore
