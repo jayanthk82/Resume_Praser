@@ -1,21 +1,30 @@
-from typing import  Any
+from typing import Any
+from config import Config 
+from openai import OpenAI #type: ignore
 
-def chat_with_reasoning_followup(client: Any,initial_prompt: str,follow_up_prompt: str,model: str = "xiaomi/mimo-v2-flash:free") -> Any:
-
-    # 1. First API call
+def chat_with_reasoning_followup(
+    client, 
+    initial_prompt: str, 
+    follow_up_prompt: str, 
+    model: str = "arcee-ai/trinity-large-preview:free"
+) -> Any:
+    """
+    Executes a two-turn conversation while preserving reasoning tokens 
+    to maintain context and logical consistency.
+    """
+    
+    # 1. Initial Request
+    # We enable reasoning via the extra_body parameter
     response1 = client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "user", "content": initial_prompt}
-        ],
+        messages=[{"role": "user", "content": initial_prompt}],
         extra_body={"reasoning": {"enabled": True}}
     )
 
-    # Extract the assistant message
     assistant_msg = response1.choices[0].message
 
-    # 2. Construct history preserving reasoning_details
-    # Note: We must explicitly pass 'reasoning_details' back if the API supports it
+    # 2. Construct Message History
+    # We include 'reasoning_details' in the assistant turn to preserve the logic flow
     messages = [
         {"role": "user", "content": initial_prompt},
         {
@@ -26,7 +35,8 @@ def chat_with_reasoning_followup(client: Any,initial_prompt: str,follow_up_promp
         {"role": "user", "content": follow_up_prompt}
     ]
 
-    # 3. Second API call with context
+    # 3. Follow-up Request
+    # The model now sees its previous reasoning chain
     response2 = client.chat.completions.create(
         model=model,
         messages=messages,
@@ -34,3 +44,8 @@ def chat_with_reasoning_followup(client: Any,initial_prompt: str,follow_up_promp
     )
 
     return response2.choices[0].message
+
+
+
+
+

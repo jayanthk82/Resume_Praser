@@ -109,8 +109,10 @@ st.markdown("### Transform your resume into a detailed profile and check your AT
 # Tabs for different functionalities
 tab1, tab2 = st.tabs(["🚀 Resume Analyzer", "🎯 ATS Scorer"])
 
+# ... [Keep imports and CSS as they are] ...
+
 # ==========================================
-# TAB 1: RESUME ANALYZER
+# TAB 1: RESUME ANALYZER (Updated Section)
 # ==========================================
 with tab1:
     col1, col2 = st.columns([1, 1])
@@ -122,7 +124,6 @@ with tab1:
     resume_analysis_result = None
 
     if uploaded_file is not None:
-        # Save uploaded file to temp path
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             tmp_file_path = tmp_file.name
@@ -155,12 +156,22 @@ with tab1:
                         else:
                             status_container.write("⚠️ Skipping scraping (No links or client unavailable).")
 
-                        # Step 4: AI Profiling
-                        status_container.write("🤖 Generating detailed profile with LLM...")
+                        # --- UPDATED Step 4: AI Profiling with Reasoning Follow-up ---
+                        status_container.write("🤖 Generating profile with reasoning chain...")
+                        
+                        # We use the updated reasoning preservation logic here
                         final_message = chat_with_reasoning_followup(
                             client=openrouter_client,
-                            initial_prompt=f"Use the information and create a detailed user profile info for a recruiter. User data extracted from multiple sources: {workflow_data}",
-                            follow_up_prompt="Remove everything about thoughts of ai, return exact info of an user no more thoughts"
+                            initial_prompt=(
+                                f"Analyze this user data and create a detailed profile for a recruiter. "
+                                f"Maintain technical accuracy and highlight achievements. "
+                                f"Data: {workflow_data}"
+                            ),
+                            follow_up_prompt=(
+                                "Now, refine this into a clean, professional profile. "
+                                "Remove all of your internal reasoning/thoughts and only provide the final profile info."
+                            ),
+                            model="arcee-ai/trinity-large-preview:free" # Use the reasoning-capable model
                         )
                         
                         resume_analysis_result = final_message.content
@@ -170,8 +181,8 @@ with tab1:
                         status_container.update(label="❌ Error Occurred", state="error")
                         st.error(f"An error occurred: {str(e)}")
                     finally:
-                        # Cleanup temp file
-                        os.unlink(tmp_file_path)
+                        if os.path.exists(tmp_file_path):
+                            os.unlink(tmp_file_path)
 
     # Display Results
     if resume_analysis_result:
@@ -180,6 +191,7 @@ with tab1:
             st.text_area("Copy this for ATS Scoring:", value=resume_analysis_result, height=400, key="generated_profile_output")
             st.download_button("Download Profile", resume_analysis_result, file_name="resume_profile.txt")
 
+# ... [Keep Tab 2 as it is] ...
 # ==========================================
 # TAB 2: ATS SCORER
 # ==========================================
