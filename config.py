@@ -1,9 +1,8 @@
-import os
-from dotenv import load_dotenv #type: ignore
+import streamlit as st  #type: ignore
 
-load_dotenv()
 class Config:
     # Use environment variables or fallback to placeholders
-    MINDEE_API_KEY = os.getenv("MINDEE_API_KEY")
-    FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY")
-    OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+    MINDEE_API_KEY = st.secrets["MINDEE_API_KEY"]
+    FIRECRAWL_API_KEY = st.secrets["FIRECRAWL_API_KEY"]
+    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+
