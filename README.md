@@ -1,9 +1,14 @@
+
 # Resume Intelligence AI: Guide
 
 [![Streamlit App](https://img.shields.io/badge/Streamlit-Live%20Demo-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://atsjbyjayanthkonanki.streamlit.app/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/jayanthk82/ats)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+
+
+https://github.com/user-attachments/assets/12c0f120-12ba-441b-a0a4-15985be7091a
 
 
 
