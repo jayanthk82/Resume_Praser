@@ -1,2 +1,27 @@
+# Environments
 .env
-.env.*
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Data & Logs
+data/
+logs/
+working/
+unwanted/
+"Working files copy"/
+*.log
+.talentos.pids
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# User-specific assets
+*.pdf
+*.docx
+nb_content.txt
+read_nb_output.txt
